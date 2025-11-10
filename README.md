@@ -20,6 +20,11 @@ Transform your agentic AI service into a globally distributed SaaS offering in m
          ┌────────────▼────────────┐
          │  Agent Runtime API      │
          │  (FastAPI + smolagents) │
+         │                         │
+         │  Available Tools:       │
+         │  • tenant_info          │
+         │  • web_search           │
+         │  • visit_webpage        │
          └────┬─────────┬──────────┘
               │         │
       ┌───────▼──┐  ┌──▼───┐
@@ -224,31 +229,37 @@ curl https://your-endpoint/health
 
 ## 🧰 Available Agent Tools
 
-The Agent Platform includes the following tools that agents can use during execution:
+The Agent Platform includes the following **smolagents** tools that agents can use during execution:
 
 ### 1. **Tenant Info Tool** (`tenant_info`)
-Access current tenant context information. This tool allows agents to:
+Access current tenant context information injected by Omnistrate. This tool allows agents to:
 - Retrieve tenant ID, email, and name
 - Get organization details
 - Access instance metadata
 - Personalize responses with customer information
 
+**How it works:**
+- Omnistrate injects system parameters as environment variables for each tenant
+- The tool reads these environment variables to provide tenant context
+- Enables agents to provide personalized, context-aware responses
+
 **Example Usage:**
 ```bash
-curl -X POST https://agent-api.instance-9yrrrhfy5.hc-pelsk80ph.us-east-2.aws.f2e0a955bb84.cloud/api/v1/agent/execute \                                 
+curl -X POST https://your-endpoint/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "task": "What do you know about me?", "max_steps": 5            
-  }' | jq                    
+    "task": "What do you know about me?",
+    "max_steps": 5
+  }'
+```
 
+**Response:**
+```json
 {
   "execution_id": "7cd03665-e644-43ff-8d16-00be220f417c",
   "status": "completed",
-  "result": "Based on the tenant information I have access to, here's what I know about you:\n\n**Personal Information:**\n- Name: Omnistrate Demo\n- Email: demo@omnistrate.com\n- Tenant ID: user-18ZZD6JBrS\n\n**Organization Details:**\n- Organization Name: Omnistrate Demo\n- Organization ID: org-TCl8TNH3b9\n\n**System Context:**\n- Instance ID: instance-9yrrrhfy5\n- Environment: Production\n\nThis is the context information associated with your current session. I use this information to personalize responses and maintain the appropriate context for our interactions.",
-  "error": null,
-  "steps": [],
-  "created_at": "2025-11-10T01:54:28.182319",
-  "completed_at": "2025-11-10T01:54:37.355961"
+  "result": "Based on the tenant information I have access to, here's what I know about you:\n\n**Personal Information:**\n- Name: Omnistrate Demo\n- Email: demo@omnistrate.com\n- Tenant ID: user-18ZZD6JBrS\n\n**Organization Details:**\n- Organization Name: Omnistrate Demo\n- Organization ID: org-TCl8TNH3b9\n\n**System Context:**\n- Instance ID: instance-9yrrrhfy5\n- Environment: Production\n\nThis is the context information associated with your current session.",
+  "steps": []
 }
 ```
 
@@ -257,20 +268,48 @@ Search the web using DuckDuckGo. Great for:
 - Finding current information
 - Research tasks
 - Looking up facts
+- Real-time data retrieval
+
+**Implementation:** Uses `DuckDuckGoSearchTool` from smolagents
 
 ### 3. **Visit Webpage** (`visit_webpage`)
 Visit and extract content from web pages. Useful for:
 - Reading articles
 - Extracting specific information
 - Following up on search results
+- Accessing documentation
+
+**Implementation:** Uses `VisitWebpageTool` from smolagents
+
+### Tool Configuration
 
 **Default Tools:**
-When no tools are specified, the agent has access to: `tenant_info`, `web_search`, and `visit_webpage`.
+When no tools are specified, the agent has access to all three tools:
+```python
+# Default tools (when tools parameter is None or omitted)
+["tenant_info", "web_search", "visit_webpage"]
+```
+
+**Custom Tool Selection:**
+Specify which tools to enable:
+```bash
+curl -X POST https://your-endpoint/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "Search for the latest AI news",
+    "tools": ["web_search", "visit_webpage"]
+  }'
+```
 
 **Disable All Tools:**
 Pass an empty array to use only the agent's reasoning capabilities:
 ```bash
-"tools": []
+curl -X POST https://your-endpoint/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "What is 2+2?",
+    "tools": []
+  }'
 ```
 
 
@@ -300,6 +339,18 @@ Pass an empty array to use only the agent's reasoning capabilities:
 │  │  ENV: TENANT_ID=user-abc123                              │   │
 │  │  ENV: TENANT_EMAIL=john@acme.com                         │   │
 │  │  ENV: OMNISTRATE_INSTANCE_ID=instance-def456             │   │
+│  │                                                          │   │
+│  │  Agent Executor (smolagents):                            │   │
+│  │  ┌──────────────────────────────────────────┐            │   │
+│  │  │ Available Tools:                         │            │   │
+│  │  │ • tenant_info (TenantInfoTool)           │            │   │
+│  │  │   - Reads Omnistrate system variables    │            │   │
+│  │  │   - Returns tenant context               │            │   │
+│  │  │ • web_search (DuckDuckGoSearchTool)      │            │   │
+│  │  │   - DuckDuckGo integration               │            │   │
+│  │  │ • visit_webpage (VisitWebpageTool)       │            │   │
+│  │  │   - Web scraping capability              │            │   │
+│  │  └──────────────────────────────────────────┘            │   │
 │  │                                                          │   │
 │  │  API Logic:                                              │   │
 │  │  ┌──────────────────────────────────────────┐            │   │
@@ -369,7 +420,7 @@ CUSTOMER A                          CUSTOMER B                          CUSTOMER
 User Request
      │
      │ POST /api/v1/agent/execute
-     │ {task: "What is 2+2?"}
+     │ {task: "What is 2+2?", tools: ["tenant_info"]}
      │ 
      ▼
 ┌─────────────────────────────────────┐
@@ -396,10 +447,33 @@ User Request
              │
              ▼
 ┌─────────────────────────────────────┐
-│  Execute Agent                      │
+│  AgentExecutor._get_tools()         │
+│                                     │
+│  Initialize smolagents tools:       │
+│  • TenantInfoTool(tenant_id)        │
+│  • DuckDuckGoSearchTool()           │
+│  • VisitWebpageTool()               │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│  Execute Agent (smolagents)         │
+│  CodeAgent.run(task, tools)         │
+│                                     │
+│  Agent can invoke:                  │
+│  - tenant_info tool                 │
+│  - web_search tool                  │
+│  - visit_webpage tool               │
+│                                     │
 │  Store results with tenant_id       │
 └────────────┬────────────────────────┘
              │
              ▼
        Return Result
+       {
+         execution_id: "...",
+         status: "completed",
+         result: "...",
+         steps: [...]
+       }
 ```
