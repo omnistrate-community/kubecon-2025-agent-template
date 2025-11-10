@@ -62,7 +62,7 @@ Transform your agentic AI service into a globally distributed SaaS offering in m
 
 ```bash
 git clone https://github.com/omnistrate-community/kubecon-2025-agent-template
-cd agent-template/agent-platform
+cd kubecon-2025-agent-template
 ```
 
 ### Step 2: Create Omnistrate Secret
@@ -70,7 +70,7 @@ cd agent-template/agent-platform
 Store your Claude API key securely:
 
 ```bash
-omctl secret create CLAUDE_KEY --environment DEV --value "your-anthropic-api-key-here"
+omctl secret set DEV CLAUDE_KEY "your-anthropic-api-key-here"
 ```
 
 ### Step 3: Build Your PaaS on Omnistrate
