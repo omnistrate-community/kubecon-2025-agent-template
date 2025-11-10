@@ -73,7 +73,7 @@ Store your Claude API key securely:
 omctl secret create CLAUDE_KEY --environment DEV --value "your-anthropic-api-key-here"
 ```
 
-### Step 3: Build Your Service on Omnistrate
+### Step 3: Build Your PaaS on Omnistrate
 
 ```bash
 omctl build --file compose-omnistrate.yaml --product-name "Agent Platform" --release-as-preferred
@@ -83,9 +83,15 @@ This command:
 - Transforms your Docker Compose into Omnistrate service
 - Configures multi-tenant deployment
 - Sets up HTTPS with automatic TLS
-- Deploys across cloud providers
+- Sets up a self-serve customer portal
 
-### Step 4: Deploy an Instance
+### Step 4: Access your self-serve customer portal
+
+```bash
+omctl service describe "Agent Platform" --output json | jq -r '. as $root | .serviceEnvironments[0] | "https://\(.saasPortalUrl)/service-plans?serviceId=\($root.id)&environmentId=\(.id)"'
+```
+
+### Step 5: Deploy an instance of your application in the Dev Environment
 
 ```bash
 # AWS (restricted to us-east-2 when testing with Omnistrate's AWS account)
@@ -125,7 +131,7 @@ omctl instance create \
   --wait
 ```
 
-### Step 5: Get Your HTTPS Endpoint
+### Step 6: Get your application's HTTPS Endpoint
 
 ```bash
 omctl instance list-endpoints <your-instance-id>
@@ -136,7 +142,7 @@ You'll get an HTTPS endpoint like:
 https://agent-api.instance-xyz.hc-abc.us-east-2.aws.f2e0a955bb84.cloud
 ```
 
-### Step 6: Test Your Agent Platform
+### Step 7: Test Your Agent Platform
 
 ```bash
 # Health check
@@ -154,12 +160,17 @@ curl -X POST https://your-endpoint/api/v1/agent/execute \
   }'
 ```
 
-### Step 7: Make changes to the agent and publish new images
+### Step 8: Make changes to the agent and publish new images
 
 ```bash
 cd agent-api && docker build --platform linux/amd64 -t <custom-image-repo>/agent-runtime:v1.x --load .
 docker push <custom-image-repo>/agent-runtime:v1.x
+
+## Change the image in the compose file and build the service again
 omctl build --file compose-omnistrate.yaml --product-name "Agent Platform" --release-as-preferred
+
+## Update your existing deployment instance to migrate to the new version
+omctl upgrade create [instanceID] --version=latest
 ```
 
 🎉 **That's it!** Your AI agent platform is now running on Omnistrate with automatic multi-tenancy and HTTPS!
