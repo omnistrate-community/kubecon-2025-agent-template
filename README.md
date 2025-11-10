@@ -152,6 +152,13 @@ curl -X POST https://your-endpoint/api/v1/agent/execute \
     "task": "What is 2 + 2? Just give me the number.",
     "tools": []
   }'
+
+### Step 7: Make changes to the agent and publish new images
+
+```bash
+cd agent-api && docker build --platform linux/amd64 -t <custom-image-repo>/agent-runtime:v1.x --load .
+docker push <custom-image-repo>/agent-runtime:v1.x
+omctl build --file compose-omnistrate.yaml --product-name "Agent Platform" --release-as-preferred
 ```
 
 🎉 **That's it!** Your AI agent platform is now running on Omnistrate with automatic multi-tenancy and HTTPS!
@@ -160,48 +167,7 @@ curl -X POST https://your-endpoint/api/v1/agent/execute \
 
 For more detailed instructions, see the [Official Omnistrate Getting Started Guide](https://docs.omnistrate.com/getting-started/overview/).
 
-## 🎨 Key Features for KubeCon Challenge
-
-### 1. **Multi-Tenant Architecture**
-- Each customer gets isolated execution environment
-- Automatic tenant ID injection via Omnistrate system parameters
-- Separate data storage per tenant in PostgreSQL
-- Zero configuration multi-tenancy
-
-### 2. **Production-Ready Security**
-- HTTPS with automatic TLS certificate provisioning
-- Secrets management via Omnistrate (API keys never in code)
-- Tenant isolation at API and data layer
-- No shared state between customers
-
-### 3. **Cloud-Agnostic Deployment**
-- Deploy to AWS, GCP, or Azure
-- Same configuration works everywhere
-- Omnistrate handles cloud-specific details
-
 ## 🔌 API Endpoints
-
-### Get Tenant Info
-```bash
-GET /api/v1/tenant/info
-
-# No headers needed - tenant ID from Omnistrate
-curl https://your-endpoint/api/v1/tenant/info
-
-Response:
-{
-  "tenant_id": "user-123",
-  "tenant_email": "customer@example.com",
-  "tenant_name": "John Doe",
-  "org_id": "org-456",
-  "org_name": "Acme Corp",
-  "instance_id": "instance-789",
-  "resource_id": "resource-abc",
-  "service_id": "service-def",
-  "plan_id": "plan-ghi",
-  "is_omnistrate_deployment": true
-}
-```
 
 ### Execute Agent Task
 ```bash
@@ -237,6 +203,58 @@ GET /health
 
 curl https://your-endpoint/health
 ```
+
+## 🧰 Available Agent Tools
+
+The Agent Platform includes the following tools that agents can use during execution:
+
+### 1. **Tenant Info Tool** (`tenant_info`)
+Access current tenant context information. This tool allows agents to:
+- Retrieve tenant ID, email, and name
+- Get organization details
+- Access instance metadata
+- Personalize responses with customer information
+
+**Example Usage:**
+```bash
+curl -X POST https://agent-api.instance-9yrrrhfy5.hc-pelsk80ph.us-east-2.aws.f2e0a955bb84.cloud/api/v1/agent/execute \                                 
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "What do you know about me?", "max_steps": 5            
+  }' | jq                    
+
+{
+  "execution_id": "7cd03665-e644-43ff-8d16-00be220f417c",
+  "status": "completed",
+  "result": "Based on the tenant information I have access to, here's what I know about you:\n\n**Personal Information:**\n- Name: Omnistrate Demo\n- Email: demo@omnistrate.com\n- Tenant ID: user-18ZZD6JBrS\n\n**Organization Details:**\n- Organization Name: Omnistrate Demo\n- Organization ID: org-TCl8TNH3b9\n\n**System Context:**\n- Instance ID: instance-9yrrrhfy5\n- Environment: Production\n\nThis is the context information associated with your current session. I use this information to personalize responses and maintain the appropriate context for our interactions.",
+  "error": null,
+  "steps": [],
+  "created_at": "2025-11-10T01:54:28.182319",
+  "completed_at": "2025-11-10T01:54:37.355961"
+}
+```
+
+### 2. **Web Search** (`web_search`)
+Search the web using DuckDuckGo. Great for:
+- Finding current information
+- Research tasks
+- Looking up facts
+
+### 3. **Visit Webpage** (`visit_webpage`)
+Visit and extract content from web pages. Useful for:
+- Reading articles
+- Extracting specific information
+- Following up on search results
+
+**Default Tools:**
+When no tools are specified, the agent has access to: `tenant_info`, `web_search`, and `visit_webpage`.
+
+**Disable All Tools:**
+Pass an empty array to use only the agent's reasoning capabilities:
+```bash
+"tools": []
+```
+
 
 ## Detailed Architecture
 

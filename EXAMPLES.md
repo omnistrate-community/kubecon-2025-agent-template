@@ -52,7 +52,38 @@ curl -X GET http://your-instance.omnistrate.com/api/v1/agent/execution/{executio
 curl -X GET "http://your-instance.omnistrate.com/api/v1/agent/executions?limit=20&offset=0"
 ```
 
-## Example 6: Using Python
+## Example 6: Using Tenant Information Tool
+
+The agent can access tenant context using the built-in `tenant_info` tool:
+
+```bash
+curl -X POST http://your-instance.omnistrate.com/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "Get my tenant information and create a personalized greeting message for me",
+    "tools": ["tenant_info"],
+    "max_steps": 5
+  }'
+```
+
+**Example Response:**
+```json
+{
+  "execution_id": "exec-abc123",
+  "task": "Get my tenant information and create a personalized greeting message for me",
+  "status": "completed",
+  "result": "Hello John Doe from Acme Corp! Your tenant ID is user-123 and you're running on instance instance-789. Welcome to the Agent Platform!",
+  "steps": [
+    {
+      "step": 1,
+      "action": "get_tenant_info",
+      "observation": "Tenant Information:\n- Tenant ID: user-123\n- Email: customer@example.com\n- Name: John Doe\n- Organization: Acme Corp (ID: org-456)\n- Instance: instance-789\n- Environment: Production"
+    }
+  ]
+}
+```
+
+## Example 7: Using Python
 
 ```python
 import requests

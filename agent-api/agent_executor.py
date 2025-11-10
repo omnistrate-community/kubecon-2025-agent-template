@@ -4,6 +4,7 @@ import logging
 import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from tenant_tool import TenantInfoTool
 
 logger = logging.getLogger(__name__)
 
@@ -137,15 +138,20 @@ class AgentExecutor:
         if tool_names is not None and len(tool_names) == 0:
             return []
         
-        # Map of available tools
+        # Map of available tools (tenant_info is always available)
         tool_map = {
             "web_search": DuckDuckGoSearchTool(),
             "visit_webpage": VisitWebpageTool(),
+            "tenant_info": TenantInfoTool(tenant_id=self.tenant_id),
         }
         
-        # If no tools specified (None), return default set
+        # If no tools specified (None), return default set including tenant_info
         if tool_names is None:
-            return [tool_map["web_search"], tool_map["visit_webpage"]]
+            return [
+                tool_map["tenant_info"],
+                tool_map["web_search"],
+                tool_map["visit_webpage"]
+            ]
         
         # Return requested tools
         tools = []

@@ -20,3 +20,8 @@ redis==5.2.0
 python-multipart==0.0.12
 python-dotenv==1.0.1
 httpx==0.27.2
+
+# DuckDuckGo Search API
+ddgs
+markdownify
+requests
