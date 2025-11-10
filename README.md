@@ -165,7 +165,6 @@ curl -X POST https://your-endpoint/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
     "task": "What is 2 + 2? Just give me the number.",
-    "tools": []
   }'
 ```
 
@@ -194,12 +193,10 @@ For more detailed instructions, see the [Official Omnistrate Getting Started Gui
 ```bash
 POST /api/v1/agent/execute
 
-# No tenant ID needed - automatically from Omnistrate
 curl -X POST https://your-endpoint/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
     "task": "What is the capital of France?",
-    "tools": [],
     "max_steps": 10
   }'
 ```
