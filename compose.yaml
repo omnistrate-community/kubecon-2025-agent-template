@@ -4,26 +4,12 @@ services:
   # PostgreSQL Database for agent metadata and execution results
   postgres:
     image: postgres:16-alpine
-    x-omnistrate-integrations:
-      - omnistrateLogging
-      - omnistrateMetrics
-    x-omnistrate-compute:
-      instanceTypes:
-        - cloudProvider: aws
-          apiParam: instanceType
-        - cloudProvider: gcp
-          apiParam: instanceType
     environment:
       POSTGRES_DB: agentdb
       POSTGRES_USER: agentuser
       POSTGRES_PASSWORD: changeme_secure_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    x-omnistrate-storage:
-      postgres_data:
-        storageType: "gp3"
-        minCapacity: 20
-        maxCapacity: 100
     ports:
       - "15432:5432"  # Use different port for local testing
     healthcheck:
@@ -35,15 +21,6 @@ services:
   # Redis for session state and caching
   redis:
     image: redis:7-alpine
-    x-omnistrate-integrations:
-      - omnistrateLogging
-      - omnistrateMetrics
-    x-omnistrate-compute:
-      instanceTypes:
-        - cloudProvider: aws
-          apiParam: instanceType
-        - cloudProvider: gcp
-          apiParam: instanceType
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -58,15 +35,6 @@ services:
   # Agent Runtime API Service
   agent-api:
     image: omnistrate/agent-runtime:latest
-    x-omnistrate-integrations:
-      - omnistrateLogging
-      - omnistrateMetrics
-    x-omnistrate-compute:
-      instanceTypes:
-        - cloudProvider: aws
-          apiParam: instanceType
-        - cloudProvider: gcp
-          apiParam: instanceType
     environment:
       # Database Configuration
       DATABASE_URL: postgresql+asyncpg://agentuser:changeme_secure_password@postgres:5432/agentdb
@@ -78,20 +46,11 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 8000
       
-      # Omnistrate Tenant Information
-      # In production, Omnistrate automatically injects these system parameters
-      # For local testing, values are loaded from .env file
-      TENANT_ID: $sys.tenant.userID
-      TENANT_EMAIL: $sys.tenant.email
-      TENANT_NAME: $sys.tenant.name
-      TENANT_ORG_ID: $sys.tenant.orgId
-      TENANT_ORG_NAME: $sys.tenant.orgName
-      
-      # Instance Metadata
-      OMNISTRATE_INSTANCE_ID: $sys.id
-      OMNISTRATE_RESOURCE_ID: $sys.deployment.resourceID
-      OMNISTRATE_SERVICE_ID: $sys.deployment.serviceID
-      OMNISTRATE_PLAN_ID: $sys.deployment.planID
+      TENANT_ID: tenantID
+      TENANT_EMAIL: tenant@email.com
+      TENANT_NAME: tenantName
+      TENANT_ORG_ID: tenantOrgID
+      TENANT_ORG_NAME: tenantOrgName
       
       # LLM Provider Configuration
       ANTHROPIC_API_KEY: $secret.CLAUDE_KEY
