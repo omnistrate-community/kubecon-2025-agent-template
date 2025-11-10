@@ -1,7 +1,7 @@
 version: '3.8'
 
 x-omnistrate-service-plan:
-  name: "default"
+  name: "Basic"
   tenancyType: "OMNISTRATE_MULTI_TENANCY"
 
 services:
