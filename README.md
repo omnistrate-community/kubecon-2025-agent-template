@@ -87,11 +87,20 @@ This command:
 
 ### Step 4: Access your self-serve customer portal
 
+Wait for customer portal deployment to finish 
+```bash
+omctl service describe "Agent Platform" --output json | jq -r '. as $root | .serviceEnvironments[0] | .saasPortalStatus'
+```
+Once its in the RUNNING state, get the customer portal endpoint:
 ```bash
 omctl service describe "Agent Platform" --output json | jq -r '. as $root | .serviceEnvironments[0] | "https://\(.saasPortalUrl)/service-plans?serviceId=\($root.id)&environmentId=\(.id)"'
 ```
 
+Use your Omnistrate email and password to test your PaaS service as a customer. We automatically enable internal users as customers for pre-prod environments.
+
 ### Step 5: Deploy an instance of your application in the Dev Environment
+
+You can use UI or use the CLI commands below to create instances:
 
 ```bash
 # AWS (restricted to us-east-2 when testing with Omnistrate's AWS account)
