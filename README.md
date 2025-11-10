@@ -152,6 +152,7 @@ curl -X POST https://your-endpoint/api/v1/agent/execute \
     "task": "What is 2 + 2? Just give me the number.",
     "tools": []
   }'
+```
 
 ### Step 7: Make changes to the agent and publish new images
 
