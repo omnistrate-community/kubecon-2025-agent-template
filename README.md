@@ -107,7 +107,7 @@ You can use UI or use the CLI commands below to create instances:
 omctl instance create \
   --service="Agent Platform" \
   --environment=Dev \
-  --plan=default \
+  --plan=Basic \
   --version=latest \
   --resource=agent-platform-root \
   --cloud-provider=aws \
@@ -119,7 +119,7 @@ omctl instance create \
 omctl instance create \
   --service="Agent Platform" \
   --environment=Dev \
-  --plan=default \
+  --plan=Basic \
   --version=latest \
   --resource=agent-platform-root \
   --cloud-provider=gcp \
@@ -131,7 +131,7 @@ omctl instance create \
 omctl instance create \
   --service="Agent Platform" \
   --environment=Dev \
-  --plan=default \
+  --plan=Basic \
   --version=latest \
   --resource=agent-platform-root \
   --cloud-provider=azure \
