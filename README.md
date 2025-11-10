@@ -1,0 +1,369 @@
+# Agent Platform - Agentic AI SaaS on Omnistrate
+
+**🚀 A production-ready, multi-tenant AI Agent Platform template for the KubeCon 2025 NA Omnistrate Challenge**
+
+Transform your agentic AI service into a globally distributed SaaS offering in minutes! This template provides a complete foundation for building and deploying AI agent platforms on Omnistrate with:
+
+- ✅ Multi-tenant architecture with automatic isolation
+- ✅ HTTPS endpoints with TLS termination
+- ✅ Production-ready FastAPI backend
+- ✅ HuggingFace smolagents integration
+
+## 🏗️ Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│              HTTPS with TLS Termination                   │
+│         (Automatic cert provisioning by Omnistrate)       │
+└─────────────────────┬────────────────────────────────────┘
+                      │
+         ┌────────────▼────────────┐
+         │  Agent Runtime API      │
+         │  (FastAPI + smolagents) │
+         └────┬─────────┬──────────┘
+              │         │
+      ┌───────▼──┐  ┌──▼───┐
+      │PostgreSQL│  │Redis │
+      │ Metadata │  │Cache │
+      └──────────┘  └──────┘
+```
+
+## 🚀 Quick Start for New Omnistrate Users
+
+### Prerequisites
+
+1. **Sign up for Omnistrate**
+   - Visit: https://omnistrate.cloud/signup
+   - Complete account creation
+
+2. **Install Omnistrate CLI**
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/omnistrate-oss/omnistrate-ctl/main/install-ctl.sh | sh
+   
+   # Or download from: https://github.com/omnistrate/ctl/releases
+   ```
+
+3. **Login to Omnistrate**
+   ```bash
+   omctl login
+   # Follow the prompts to authenticate
+   ```
+
+4. **Get Anthropic API Key** (for Claude)
+   - Visit: https://console.anthropic.com/
+   - Create an API key
+   - Save it securely
+
+5. **Integrate w/ your favor AI Copilot platform**
+    - Leverage the Omnistrate FDE skill to iterate on your service with your Copilot tool (e.g., GitHub Copilot, Claude Code, etc.)
+    - See: https://docs.omnistrate.com/getting-started/overview/#setup-your-ai-agent for detailed instructions.
+
+### Step 1: Clone This Template
+
+```bash
+git clone https://github.com/omnistrate-community/kubecon-2025-agent-template
+cd agent-template/agent-platform
+```
+
+### Step 2: Create Omnistrate Secret
+
+Store your Claude API key securely:
+
+```bash
+omctl secret create CLAUDE_KEY --environment DEV --value "your-anthropic-api-key-here"
+```
+
+### Step 3: Build Your Service on Omnistrate
+
+```bash
+omctl build --file compose-omnistrate.yaml --product-name "Agent Platform" --release-as-preferred
+```
+
+This command:
+- Transforms your Docker Compose into Omnistrate service
+- Configures multi-tenant deployment
+- Sets up HTTPS with automatic TLS
+- Deploys across cloud providers
+
+### Step 4: Deploy an Instance
+
+```bash
+# AWS (restricted to us-east-2 when testing with Omnistrate's AWS account)
+omctl instance create \
+  --service="Agent Platform" \
+  --environment=Dev \
+  --plan=default \
+  --version=latest \
+  --resource=agent-platform-root \
+  --cloud-provider=aws \
+  --region=us-east-2 \
+  --param '{}' \
+  --wait
+
+# GCP (restricted to us-central1 when testing with Omnistrate's GCP project)
+omctl instance create \
+  --service="Agent Platform" \
+  --environment=Dev \
+  --plan=default \
+  --version=latest \
+  --resource=agent-platform-root \
+  --cloud-provider=gcp \
+  --region=us-central1 \
+  --param '{}' \
+  --wait
+
+# Azure (restricted to eastus2 when testing with Omnistrate's Azure subscription)
+omctl instance create \
+  --service="Agent Platform" \
+  --environment=Dev \
+  --plan=default \
+  --version=latest \
+  --resource=agent-platform-root \
+  --cloud-provider=azure \
+  --region=eastus2 \
+  --param '{}' \
+  --wait
+```
+
+### Step 5: Get Your HTTPS Endpoint
+
+```bash
+omctl instance list-endpoints <your-instance-id>
+```
+
+You'll get an HTTPS endpoint like:
+```
+https://agent-api.instance-xyz.hc-abc.us-east-2.aws.f2e0a955bb84.cloud
+```
+
+### Step 6: Test Your Agent Platform
+
+```bash
+# Health check
+curl https://your-endpoint/health
+
+# Get tenant info
+curl https://your-endpoint/api/v1/tenant/info
+
+# Execute an agent task
+curl -X POST https://your-endpoint/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "What is 2 + 2? Just give me the number.",
+    "tools": []
+  }'
+```
+
+🎉 **That's it!** Your AI agent platform is now running on Omnistrate with automatic multi-tenancy and HTTPS!
+
+## 📖 Complete Getting Started Guide
+
+For more detailed instructions, see the [Official Omnistrate Getting Started Guide](https://docs.omnistrate.com/getting-started/overview/).
+
+## 🎨 Key Features for KubeCon Challenge
+
+### 1. **Multi-Tenant Architecture**
+- Each customer gets isolated execution environment
+- Automatic tenant ID injection via Omnistrate system parameters
+- Separate data storage per tenant in PostgreSQL
+- Zero configuration multi-tenancy
+
+### 2. **Production-Ready Security**
+- HTTPS with automatic TLS certificate provisioning
+- Secrets management via Omnistrate (API keys never in code)
+- Tenant isolation at API and data layer
+- No shared state between customers
+
+### 3. **Cloud-Agnostic Deployment**
+- Deploy to AWS, GCP, or Azure
+- Same configuration works everywhere
+- Omnistrate handles cloud-specific details
+
+## 🔌 API Endpoints
+
+### Get Tenant Info
+```bash
+GET /api/v1/tenant/info
+
+# No headers needed - tenant ID from Omnistrate
+curl https://your-endpoint/api/v1/tenant/info
+
+Response:
+{
+  "tenant_id": "user-123",
+  "tenant_email": "customer@example.com",
+  "tenant_name": "John Doe",
+  "org_id": "org-456",
+  "org_name": "Acme Corp",
+  "instance_id": "instance-789",
+  "resource_id": "resource-abc",
+  "service_id": "service-def",
+  "plan_id": "plan-ghi",
+  "is_omnistrate_deployment": true
+}
+```
+
+### Execute Agent Task
+```bash
+POST /api/v1/agent/execute
+
+# No tenant ID needed - automatically from Omnistrate
+curl -X POST https://your-endpoint/api/v1/agent/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task": "What is the capital of France?",
+    "tools": [],
+    "max_steps": 10
+  }'
+```
+
+### Get Execution Status
+```bash
+GET /api/v1/agent/execution/{execution_id}
+
+curl https://your-endpoint/api/v1/agent/execution/{execution_id}
+```
+
+### List Executions
+```bash
+GET /api/v1/agent/executions?limit=50&offset=0
+
+curl https://your-endpoint/api/v1/agent/executions?limit=50
+```
+
+### Health Check
+```bash
+GET /health
+
+curl https://your-endpoint/health
+```
+
+## Detailed Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    YOUR CONTROL PLANE                           │
+│                                                                 │
+│  Customer Subscription → System Parameters Generation           │
+│                                                                 │
+│  $sys.tenant.userID = "user-abc123"                             │
+│  $sys.tenant.email = "john@acme.com"                            │
+│  $sys.tenant.name = "John Doe"                                  │
+│  $sys.tenant.orgId = "org-xyz789"                               │
+│  $sys.id = "instance-def456"                                    │
+└────────────────────────┬────────────────────────────────────────┘
+                         │
+                         │ Inject as Environment Variables
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              CUSTOMER INSTANCE (Shared VM)                      │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  agent-api Container                                     │   │
+│  │                                                          │   │
+│  │  ENV: TENANT_ID=user-abc123                              │   │
+│  │  ENV: TENANT_EMAIL=john@acme.com                         │   │
+│  │  ENV: OMNISTRATE_INSTANCE_ID=instance-def456             │   │
+│  │                                                          │   │
+│  │  API Logic:                                              │   │
+│  │  ┌──────────────────────────────────────────┐            │   │
+│  │  │ get_tenant_id():                         │            │   │
+│  │  │     return TENANT_ID                     │            │   │
+│  │  └──────────────────────────────────────────┘            │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                         │                                       │
+│                         │ Tenant ID: user-abc123                │
+│                         ▼                                       │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  postgres Container                                      │   │
+│  │                                                          │   │
+│  │  agent_executions table:                                 │   │
+│  │  ┌────────────┬────────────┬─────────┬─────────────┐     │   │
+│  │  │ id         │ tenant_id  │ task    │ result      │     │   │
+│  │  ├────────────┼────────────┼─────────┼─────────────┤     │   │
+│  │  │ exec-1     │ user-abc123│ Task 1  │ Result 1    │     │   │
+│  │  │ exec-2     │ user-abc123│ Task 2  │ Result 2    │     │   │
+│  │  └────────────┴────────────┴─────────┴─────────────┘     │   │
+│  │                                                          │   │
+│  │  All queries filtered by tenant_id = user-abc123         │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  redis Container                                         │   │
+│  │  Session state isolated by tenant_id prefix              │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Multi-Customer Deployment
+
+```
+CUSTOMER A                          CUSTOMER B                          CUSTOMER C
+┌──────────────┐                   ┌──────────────┐                   ┌──────────────┐
+│ Subscription │                   │ Subscription │                   │ Subscription │
+└──────┬───────┘                   └──────┬───────┘                   └──────┬───────┘
+       │                                  │                                  │
+       │ Omnistrate deploys               │ Omnistrate deploys               │ Omnistrate deploys
+       ▼                                  ▼                                  ▼
+┌────────────────┐              ┌────────────────┐              ┌────────────────┐
+│ Instance A     │              │ Instance B     │              │ Instance C     │
+│                │              │                │              │                │
+│ Tenant ID:     │              │ Tenant ID:     │              │ Tenant ID:     │
+│ user-aaa       │              │ user-bbb       │              │ user-ccc       │
+│                │              │                │              │                │
+│ agent-api      │              │ agent-api      │              │ agent-api      │
+│ postgres       │              │ postgres       │              │ postgres       │
+│ redis          │              │ redis          │              │ redis          │
+│                │              │                │              │                │
+│ Data isolated  │              │ Data isolated  │              │ Data isolated  │
+│ by user-aaa    │              │ by user-bbb    │              │ by user-ccc    │
+└────────────────┘              └────────────────┘              └────────────────┘
+
+         ▲                               ▲                               ▲
+         │                               │                               │
+         │                               │                               │
+         └───────────────────────────────┴───────────────────────────────┘
+                        All share VMs in Provider Account
+                        (Multi-tenant PaaS Model)
+```
+
+### API Request Flow
+
+```
+User Request
+     │
+     │ POST /api/v1/agent/execute
+     │ {task: "What is 2+2?"}
+     │ 
+     ▼
+┌─────────────────────────────────────┐
+│  FastAPI Endpoint                   │
+│  @app.post("/api/v1/agent/execute") │
+└────────────┬────────────────────────┘
+             │
+             │ Depends(get_tenant_id)
+             ▼
+┌─────────────────────────────────────┐
+│  get_tenant_id()                    │
+│                                     │
+│  return TENANT_ID                   │
+│  (from environment variable)        │
+│                                     │
+│  tenant_id = "user-abc123"          │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│  Create AgentExecution              │
+│  execution.tenant_id = "user-abc123"│
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│  Execute Agent                      │
+│  Store results with tenant_id       │
+└────────────┬────────────────────────┘
+             │
+             ▼
+       Return Result
+```

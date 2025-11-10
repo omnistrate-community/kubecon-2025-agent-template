@@ -1,0 +1,20 @@
+# Local development overrides
+# This file overrides values in compose.yaml for local testing
+# Docker Compose automatically applies this when running locally
+
+services:
+  agent-api:
+    environment:
+      # Override Omnistrate system parameters with local test values
+      TENANT_ID: ${TENANT_ID}
+      TENANT_EMAIL: ${TENANT_EMAIL}
+      TENANT_NAME: ${TENANT_NAME}
+      TENANT_ORG_ID: ${TENANT_ORG_ID}
+      TENANT_ORG_NAME: ${TENANT_ORG_NAME}
+      OMNISTRATE_INSTANCE_ID: ${OMNISTRATE_INSTANCE_ID}
+      OMNISTRATE_RESOURCE_ID: ${OMNISTRATE_RESOURCE_ID}
+      OMNISTRATE_SERVICE_ID: ${OMNISTRATE_SERVICE_ID}
+      OMNISTRATE_PLAN_ID: ${OMNISTRATE_PLAN_ID}
+      
+      # Override Omnistrate secret with local API key
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}

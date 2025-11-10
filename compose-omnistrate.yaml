@@ -1,0 +1,113 @@
+version: '3.8'
+
+x-omnistrate-service-plan:
+  name: "default"
+  tenancyType: "OMNISTRATE_MULTI_TENANCY"
+
+services:
+  # Synthetic root service - coordinates all child services
+  agent-platform-root:
+    image: omnistrate/noop
+    x-omnistrate-mode-internal: false
+    depends_on:
+      - agent-api
+      - postgres
+      - redis
+
+  # PostgreSQL Database for agent metadata and execution results
+  postgres:
+    image: postgres:16-alpine
+    x-omnistrate-mode-internal: true
+    x-omnistrate-compute:
+      replicaCount: 1
+      instanceTypes:
+        - cloudProvider: aws
+          name: t3.medium
+    environment:
+      POSTGRES_DB: agentdb
+      POSTGRES_USER: agentuser
+      POSTGRES_PASSWORD: changeme_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentuser -d agentdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session state and caching
+  redis:
+    image: redis:7-alpine
+    x-omnistrate-mode-internal: true
+    x-omnistrate-compute:
+      replicaCount: 1
+      instanceTypes:
+        - cloudProvider: aws
+          name: t3.small
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Agent Runtime API Service
+  agent-api:
+    image: omnistrate/agent-runtime:latest
+    x-omnistrate-mode-internal: true
+    x-omnistrate-compute:
+      replicaCount: 1
+      instanceTypes:
+        - cloudProvider: aws
+          name: t3.medium
+    x-omnistrate-capabilities:
+      httpReverseProxy:
+        targetPort: 8000
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql+asyncpg://agentuser:changeme_secure_password@postgres:5432/agentdb
+      
+      # Redis Configuration
+      REDIS_URL: redis://redis:6379/0
+      
+      # API Configuration
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      
+      # Omnistrate Tenant Information
+      TENANT_ID: $sys.tenant.userID
+      TENANT_EMAIL: $sys.tenant.email
+      TENANT_NAME: $sys.tenant.name
+      TENANT_ORG_ID: $sys.tenant.orgId
+      TENANT_ORG_NAME: $sys.tenant.orgName
+      
+      # Instance Metadata
+      OMNISTRATE_INSTANCE_ID: $sys.id
+      OMNISTRATE_RESOURCE_ID: $sys.deployment.resourceID
+      OMNISTRATE_SERVICE_ID: $sys.deployment.serviceID
+      OMNISTRATE_PLAN_ID: $sys.deployment.planID
+      
+      # LLM Provider Configuration
+      ANTHROPIC_API_KEY: $secret.CLAUDE_KEY
+      
+      # Agent Configuration
+      DEFAULT_MODEL: "claude-sonnet-4-5"
+      MAX_EXECUTION_TIME: 300
+      MAX_RETRIES: 3
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+  redis_data:
