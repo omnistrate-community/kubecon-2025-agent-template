@@ -169,7 +169,7 @@ curl https://your-endpoint/api/v1/tenant/info
 curl -X POST https://your-endpoint/api/v1/agent/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "task": "What is 2 + 2? Just give me the number.",
+    "task": "What is 2 + 2? Just give me the number."
   }'
 ```
 
