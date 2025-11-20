@@ -65,7 +65,7 @@ Transform your agentic AI service into a globally distributed SaaS offering in m
    - Create an API key
    - Save it securely
 
-6. **Integrate w/ your favor AI Copilot platform**
+6. **Integrate w/ your favorite AI Copilot platform**
     - Leverage the Omnistrate FDE skill to iterate on your service with your Copilot tool (e.g., GitHub Copilot, Claude Code, etc.)
     - See: https://docs.omnistrate.com/getting-started/overview/#setup-your-ai-agent for detailed instructions.
 
